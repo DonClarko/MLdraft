@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Hero card styles */
+@layer components {
+  .hero-card {
+    @apply relative overflow-hidden rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm transition-all duration-200;
+  }
+  
+  .hero-card:hover {
+    @apply border-white/20 bg-white/10 transform scale-105;
+  }
+  
+  .hero-card.selected {
+    @apply border-ml-blue-500 bg-ml-blue-500/20 ring-2 ring-ml-blue-500/50;
+  }
+  
+  .hero-card.banned {
+    @apply border-ml-red-500 bg-ml-red-500/20 opacity-50;
+  }
+  
+  .tier-badge {
+    @apply inline-flex items-center justify-center w-6 h-6 rounded font-bold text-xs;
+  }
+  
+  .tier-badge.tier-s {
+    @apply bg-gradient-to-r from-yellow-400 to-amber-500 text-black;
+  }
+  
+  .tier-badge.tier-a {
+    @apply bg-gradient-to-r from-purple-500 to-violet-600 text-white;
+  }
+  
+  .tier-badge.tier-b {
+    @apply bg-gradient-to-r from-blue-500 to-cyan-500 text-white;
+  }
+  
+  .tier-badge.tier-c {
+    @apply bg-gradient-to-r from-green-500 to-emerald-500 text-white;
+  }
+  
+  .tier-badge.tier-d {
+    @apply bg-gradient-to-r from-gray-500 to-slate-500 text-white;
+  }
+  
+  .role-icon {
+    @apply w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold;
+  }
+  
+  .role-icon.tank {
+    @apply bg-blue-600 text-white;
+  }
+  
+  .role-icon.fighter {
+    @apply bg-orange-600 text-white;
+  }
+  
+  .role-icon.assassin {
+    @apply bg-purple-600 text-white;
+  }
+  
+  .role-icon.mage {
+    @apply bg-pink-600 text-white;
+  }
+  
+  .role-icon.marksman {
+    @apply bg-yellow-600 text-black;
+  }
+  
+  .role-icon.support {
+    @apply bg-green-600 text-white;
+  }
+  
+  .btn-primary {
+    @apply px-4 py-2 bg-ml-blue-600 hover:bg-ml-blue-700 text-white rounded-lg font-medium transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-colors;
+  }
+  
+  .btn-danger {
+    @apply px-4 py-2 bg-ml-red-600 hover:bg-ml-red-700 text-white rounded-lg font-medium transition-colors;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-ml-blue-500 focus:ring-1 focus:ring-ml-blue-500;
+  }
+  
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+  }
+}
+
+/* Draft phase animations */
+.phase-indicator {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(22, 119, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(22, 119, 255, 0.8);
+  }
+}
+
+/* Team color accents */
+.team-blue {
+  --team-color: #1677ff;
+  --team-bg: rgba(22, 119, 255, 0.1);
+}
+
+.team-red {
+  --team-color: #f5222d;
+  --team-bg: rgba(245, 34, 45, 0.1);
+}
