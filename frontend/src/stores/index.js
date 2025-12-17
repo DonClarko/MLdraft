@@ -1,11 +1,30 @@
 import { create } from 'zustand'
 
+// ML Bang Bang Draft Sequence - Grouped turns with count
+// Each turn has 30 seconds to complete all actions
+const DRAFT_SEQUENCE = [
+  // Ban Phase
+  { type: 'ban', team: 'blue', count: 3 },   // 0 - Blue bans 3 heroes
+  { type: 'ban', team: 'red', count: 3 },    // 1 - Red bans 3 heroes
+  { type: 'ban', team: 'blue', count: 2 },   // 2 - Blue bans 2 heroes
+  { type: 'ban', team: 'red', count: 2 },    // 3 - Red bans 2 heroes
+  
+  // Pick Phase
+  { type: 'pick', team: 'blue', count: 1 },  // 4 - Blue picks 1 hero
+  { type: 'pick', team: 'red', count: 2 },   // 5 - Red picks 2 heroes
+  { type: 'pick', team: 'blue', count: 2 },  // 6 - Blue picks 2 heroes
+  { type: 'pick', team: 'red', count: 2 },   // 7 - Red picks 2 heroes
+  { type: 'pick', team: 'blue', count: 2 },  // 8 - Blue picks 2 heroes
+  { type: 'pick', team: 'red', count: 1 },   // 9 - Red picks 1 hero
+]
+
 // Draft Store
 export const useDraftStore = create((set, get) => ({
   // Draft state
   phase: 'ban', // 'ban' | 'pick' | 'complete'
   currentTeam: 'blue', // 'blue' | 'red'
-  currentPick: 0, // Index of current pick/ban
+  currentStep: 0, // Index in DRAFT_SEQUENCE (which turn)
+  turnActionsLeft: 3, // How many actions left in current turn
   
   // Teams
   blueBans: [],
@@ -20,121 +39,133 @@ export const useDraftStore = create((set, get) => ({
   // All heroes
   heroes: [],
   
+  // Get current action info
+  getCurrentAction: () => {
+    const { currentStep } = get()
+    if (currentStep >= DRAFT_SEQUENCE.length) return null
+    return DRAFT_SEQUENCE[currentStep]
+  },
+  
+  // Get turn info
+  getTurnInfo: () => {
+    const { currentStep, turnActionsLeft } = get()
+    if (currentStep >= DRAFT_SEQUENCE.length) return null
+    const action = DRAFT_SEQUENCE[currentStep]
+    return {
+      ...action,
+      actionsLeft: turnActionsLeft,
+      totalActions: action.count
+    }
+  },
+  
   // Actions
   setHeroes: (heroes) => set({ heroes }),
   
   setSuggestions: (suggestions, teamAnalysis) => set({ suggestions, teamAnalysis }),
   
-  banHero: (heroId) => {
-    const { currentTeam, blueBans, redBans, currentPick, phase } = get()
+  // Select a hero (ban or pick)
+  selectHero: (heroId) => {
+    const { currentStep, turnActionsLeft, blueBans, redBans, bluePicks, redPicks } = get()
     
-    if (phase !== 'ban') return
+    if (currentStep >= DRAFT_SEQUENCE.length) return false
     
-    if (currentTeam === 'blue') {
-      set({ 
-        blueBans: [...blueBans, heroId],
-        currentTeam: 'red',
-        currentPick: currentPick + 1
-      })
+    const action = DRAFT_SEQUENCE[currentStep]
+    
+    // Add the hero to appropriate list
+    if (action.type === 'ban') {
+      if (action.team === 'blue') {
+        set({ blueBans: [...blueBans, heroId] })
+      } else {
+        set({ redBans: [...redBans, heroId] })
+      }
     } else {
+      if (action.team === 'blue') {
+        set({ bluePicks: [...bluePicks, heroId] })
+      } else {
+        set({ redPicks: [...redPicks, heroId] })
+      }
+    }
+    
+    // Check if turn is complete
+    const newActionsLeft = turnActionsLeft - 1
+    
+    if (newActionsLeft <= 0) {
+      // Move to next turn
+      get().moveToNextTurn()
+    } else {
+      // Stay in same turn, decrement actions left
+      set({ turnActionsLeft: newActionsLeft })
+    }
+    
+    return true
+  },
+  
+  // Move to next turn
+  moveToNextTurn: () => {
+    const { currentStep } = get()
+    const nextStep = currentStep + 1
+    
+    if (nextStep >= DRAFT_SEQUENCE.length) {
+      set({ phase: 'complete', currentStep: nextStep, currentTeam: 'blue', turnActionsLeft: 0 })
+    } else {
+      const nextAction = DRAFT_SEQUENCE[nextStep]
       set({ 
-        redBans: [...redBans, heroId],
-        currentTeam: 'blue',
-        currentPick: currentPick + 1
+        currentStep: nextStep,
+        currentTeam: nextAction.team,
+        phase: nextAction.type,
+        turnActionsLeft: nextAction.count
       })
     }
+  },
+  
+  // Skip remaining bans in current turn (when timer expires)
+  skipRemainingBans: () => {
+    const { currentStep, turnActionsLeft, phase, blueBans, redBans } = get()
     
-    // Check if ban phase is complete (5 bans each = 10 total)
-    const newBlueBans = currentTeam === 'blue' ? [...blueBans, heroId] : blueBans
-    const newRedBans = currentTeam === 'red' ? [...redBans, heroId] : redBans
+    if (phase !== 'ban' || currentStep >= DRAFT_SEQUENCE.length) return
     
-    if (newBlueBans.length >= 5 && newRedBans.length >= 5) {
-      set({ phase: 'pick', currentTeam: 'blue', currentPick: 0 })
+    const action = DRAFT_SEQUENCE[currentStep]
+    
+    // Add null for each remaining ban
+    const skippedBans = Array(turnActionsLeft).fill(null)
+    
+    if (action.team === 'blue') {
+      set({ blueBans: [...blueBans, ...skippedBans] })
+    } else {
+      set({ redBans: [...redBans, ...skippedBans] })
     }
+    
+    // Move to next turn
+    get().moveToNextTurn()
+  },
+
+  // Legacy methods for compatibility
+  banHero: (heroId) => {
+    const { phase } = get()
+    if (phase === 'ban') {
+      return get().selectHero(heroId)
+    }
+    return false
   },
   
   pickHero: (heroId) => {
-    const { currentTeam, bluePicks, redPicks, currentPick, phase } = get()
-    
-    if (phase !== 'pick') return
-    
-    // Pick order: Blue, Red, Red, Blue, Blue, Red, Red, Blue, Blue, Red
-    const pickOrder = ['blue', 'red', 'red', 'blue', 'blue', 'red', 'red', 'blue', 'blue', 'red']
-    
-    if (currentTeam === 'blue') {
-      set({ bluePicks: [...bluePicks, heroId] })
-    } else {
-      set({ redPicks: [...redPicks, heroId] })
+    const { phase } = get()
+    if (phase === 'pick') {
+      return get().selectHero(heroId)
     }
-    
-    const newPick = currentPick + 1
-    
-    // Check if pick phase is complete
-    if (newPick >= 10) {
-      set({ phase: 'complete', currentPick: newPick })
-    } else {
-      set({ 
-        currentTeam: pickOrder[newPick],
-        currentPick: newPick
-      })
-    }
+    return false
   },
   
   undoLastAction: () => {
-    const { phase, blueBans, redBans, bluePicks, redPicks, currentPick } = get()
-    
-    if (phase === 'ban') {
-      if (blueBans.length + redBans.length === 0) return
-      
-      // Determine which team made the last ban
-      const wasBlue = blueBans.length > redBans.length
-      
-      if (wasBlue) {
-        set({
-          blueBans: blueBans.slice(0, -1),
-          currentTeam: 'blue',
-          currentPick: currentPick - 1
-        })
-      } else {
-        set({
-          redBans: redBans.slice(0, -1),
-          currentTeam: 'red',
-          currentPick: currentPick - 1
-        })
-      }
-    } else if (phase === 'pick' || phase === 'complete') {
-      if (bluePicks.length + redPicks.length === 0) {
-        // Go back to ban phase
-        set({ phase: 'ban', currentTeam: 'red', currentPick: 9 })
-        return
-      }
-      
-      const pickOrder = ['blue', 'red', 'red', 'blue', 'blue', 'red', 'red', 'blue', 'blue', 'red']
-      const lastPick = currentPick - 1
-      const lastTeam = pickOrder[lastPick]
-      
-      if (lastTeam === 'blue') {
-        set({
-          bluePicks: bluePicks.slice(0, -1),
-          currentTeam: 'blue',
-          currentPick: lastPick,
-          phase: 'pick'
-        })
-      } else {
-        set({
-          redPicks: redPicks.slice(0, -1),
-          currentTeam: 'red',
-          currentPick: lastPick,
-          phase: 'pick'
-        })
-      }
-    }
+    // This is more complex with grouped turns, disable for now
+    // Could be implemented later if needed
   },
   
   resetDraft: () => set({
     phase: 'ban',
     currentTeam: 'blue',
-    currentPick: 0,
+    currentStep: 0,
+    turnActionsLeft: 3,
     blueBans: [],
     redBans: [],
     bluePicks: [],
@@ -146,13 +177,22 @@ export const useDraftStore = create((set, get) => ({
   // Check if hero is available
   isHeroAvailable: (heroId) => {
     const { blueBans, redBans, bluePicks, redPicks } = get()
-    return ![...blueBans, ...redBans, ...bluePicks, ...redPicks].includes(heroId)
+    const allSelected = [...blueBans, ...redBans, ...bluePicks, ...redPicks].filter(id => id !== null)
+    return !allSelected.includes(heroId)
   },
   
   // Get all unavailable hero IDs
   getUnavailableHeroes: () => {
     const { blueBans, redBans, bluePicks, redPicks } = get()
     return [...blueBans, ...redBans, ...bluePicks, ...redPicks]
+  },
+  
+  // Get phase info for display
+  getPhaseInfo: () => {
+    const { currentStep } = get()
+    if (currentStep <= 3) return { phase: 1, name: 'Ban Phase' }
+    if (currentStep <= 9) return { phase: 2, name: 'Pick Phase' }
+    return { phase: 3, name: 'Draft Complete' }
   }
 }))
 

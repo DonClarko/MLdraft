@@ -394,7 +394,7 @@ const laneDefaultRoles = {
   gold_lane: ['marksman'],
   exp_lane: ['fighter', 'tank'],
   mid_lane: ['mage'],
-  jungle: ['assassin', 'fighter', 'mage'],
+  jungle: ['assassin', 'fighter'],
   roamer: ['tank', 'support']
 }
 
@@ -628,30 +628,36 @@ function TierListsManager() {
               })
               .map(hero => {
               return (
-                <div key={hero.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-white font-medium">{hero.name}</span>
-                    {/* Show hero's role classification */}
-                    <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/40 capitalize">
-                      {hero.role}
-                      {hero.secondary_role && `/${hero.secondary_role}`}
-                    </span>
+                <div key={hero.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/8 transition-colors">
+                  <div className="flex items-center space-x-4 min-w-0 flex-1">
+                    {/* Hero Icon Placeholder */}
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-ml-blue-600 to-ml-blue-800 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-lg">{hero.name.charAt(0)}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-white font-semibold text-lg block">{hero.name}</span>
+                      {/* Show hero's role classification */}
+                      <span className="text-sm text-white/50 capitalize">
+                        {hero.role}
+                        {hero.secondary_role && ` / ${hero.secondary_role}`}
+                      </span>
+                    </div>
                   </div>
                 
                 {editing ? (
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-3 ml-4">
                     {TIERS.map(tier => (
                       <button
                         key={tier}
                         onClick={() => handleTierChange(hero.id, tier)}
-                        className={`w-8 h-8 rounded font-bold text-sm ${
+                        className={`w-12 h-12 rounded-xl font-bold text-lg transition-all ${
                           laneEntries[hero.id] === tier
-                            ? tier === 'S' ? 'bg-yellow-500 text-black' :
-                              tier === 'A' ? 'bg-purple-500 text-white' :
-                              tier === 'B' ? 'bg-blue-500 text-white' :
-                              tier === 'C' ? 'bg-green-500 text-white' :
-                              'bg-gray-500 text-white'
-                            : 'bg-white/10 text-white/50 hover:bg-white/20'
+                            ? tier === 'S' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/30 scale-110' :
+                              tier === 'A' ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30 scale-110' :
+                              tier === 'B' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-110' :
+                              tier === 'C' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 scale-110' :
+                              'bg-gray-500 text-white shadow-lg shadow-gray-500/30 scale-110'
+                            : 'bg-white/10 text-white/50 hover:bg-white/20 hover:scale-105'
                         }`}
                       >
                         {tier}
@@ -659,13 +665,13 @@ function TierListsManager() {
                     ))}
                     <button
                       onClick={() => handleTierChange(hero.id, null)}
-                      className="w-8 h-8 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                      className="w-12 h-12 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:scale-105 transition-all ml-2"
                     >
-                      <X className="w-4 h-4 mx-auto" />
+                      <X className="w-5 h-5 mx-auto" />
                     </button>
                   </div>
                 ) : (
-                  <span className={`px-3 py-1 rounded font-bold text-sm ${
+                  <span className={`px-4 py-2 rounded-lg font-bold text-base ${
                     laneEntries[hero.id] === 'S' ? 'bg-yellow-500/20 text-yellow-400' :
                     laneEntries[hero.id] === 'A' ? 'bg-purple-500/20 text-purple-400' :
                     laneEntries[hero.id] === 'B' ? 'bg-blue-500/20 text-blue-400' :
