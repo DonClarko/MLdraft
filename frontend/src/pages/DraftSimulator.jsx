@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, RotateCcw, Undo2, Clock, Play } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useDraftStore } from '../stores'
+import { useDraftStore, DRAFT_MODES } from '../stores'
 import { heroesApi, draftApi } from '../services/api'
 import SuggestionPanel from '../components/SuggestionPanel'
 
@@ -61,6 +61,8 @@ export default function DraftSimulator() {
   const [draftStarted, setDraftStarted] = useState(false)
   
   const {
+    draftMode,
+    setDraftMode,
     phase,
     currentTeam,
     currentStep,
@@ -396,26 +398,71 @@ export default function DraftSimulator() {
             ML Draft Simulator
           </h1>
           <p className="text-lg text-gray-400 mb-8">
-            Practice your drafting skills with real ML Bang Bang draft format
+            Pumili ng draft format at simulahin ang pick/ban phase ng Mobile Legends
           </p>
           
+          {/* Draft Mode Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-3xl mx-auto">
+            {Object.values(DRAFT_MODES).map((mode) => (
+              <button
+                key={mode.id}
+                onClick={() => setDraftMode(mode.id)}
+                className={`
+                  relative p-5 rounded-xl border-2 transition-all text-left
+                  ${draftMode === mode.id 
+                    ? 'border-yellow-500 bg-yellow-500/10 shadow-[0_0_20px_rgba(234,179,8,0.2)]' 
+                    : 'border-white/10 bg-gray-800/50 hover:border-white/30 hover:bg-gray-800/80'
+                  }
+                `}
+              >
+                {draftMode === mode.id && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-black text-xs font-bold">✓</span>
+                  </div>
+                )}
+                <div className="text-2xl mb-2">{mode.icon}</div>
+                <div className="text-white font-bold text-lg">{mode.name}</div>
+                <div className="text-gray-400 text-sm mt-1">{mode.description}</div>
+                <div className="mt-3 flex gap-2">
+                  <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
+                    {mode.bansPerTeam} Bans
+                  </span>
+                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                    5 Picks
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+
           {/* Draft Format Info */}
           <div className="bg-gray-800/50 rounded-xl p-6 mb-8 border border-white/10 max-w-lg mx-auto">
-            <h3 className="text-xl font-semibold text-white mb-4">Draft Format</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              {DRAFT_MODES[draftMode].icon} {DRAFT_MODES[draftMode].name}
+            </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="bg-blue-900/30 rounded-lg p-3 border border-blue-500/30">
                 <div className="text-blue-400 font-semibold mb-1">Blue Team</div>
-                <div className="text-gray-400">5 Bans • 5 Picks</div>
+                <div className="text-gray-400">{DRAFT_MODES[draftMode].bansPerTeam} Bans • 5 Picks</div>
                 <div className="text-xs text-gray-500 mt-1">First Pick</div>
               </div>
               <div className="bg-red-900/30 rounded-lg p-3 border border-red-500/30">
                 <div className="text-red-400 font-semibold mb-1">Red Team</div>
-                <div className="text-gray-400">5 Bans • 5 Picks</div>
+                <div className="text-gray-400">{DRAFT_MODES[draftMode].bansPerTeam} Bans • 5 Picks</div>
                 <div className="text-xs text-gray-500 mt-1">Last Pick</div>
               </div>
             </div>
-            <div className="mt-4 text-xs text-gray-500">
-              20 steps total • 30 seconds per turn
+            {draftMode === 'classic' ? (
+              <div className="mt-3 text-xs text-yellow-400/80 bg-yellow-500/10 rounded-lg p-2">
+                Split draft: Ban Phase 1 (2 each) → Pick Phase 1 → Ban Phase 2 (1 each) → Pick Phase 2
+              </div>
+            ) : (
+              <div className="mt-3 text-xs text-yellow-400/80 bg-yellow-500/10 rounded-lg p-2">
+                Split draft: Ban Phase 1 (3 each) → Pick Phase 1 → Ban Phase 2 (2 each) → Pick Phase 2
+              </div>
+            )}
+            <div className="mt-3 text-xs text-gray-500">
+              {DRAFT_MODES[draftMode].sequence.length} steps total • 30 seconds per turn
             </div>
           </div>
 
@@ -443,7 +490,7 @@ export default function DraftSimulator() {
             
             {/* Blue Bans - Horizontal row */}
             <div className="flex justify-center gap-2 mb-4">
-              {[0, 1, 2, 3, 4].map((index) => renderBanSlot(blueBans[index], 'blue', index))}
+              {Array.from({ length: DRAFT_MODES[draftMode].bansPerTeam }, (_, index) => renderBanSlot(blueBans[index], 'blue', index))}
             </div>
             
             {/* Blue Picks - Vertical list */}
@@ -457,6 +504,12 @@ export default function DraftSimulator() {
         <div className="col-span-12 lg:col-span-6 order-1 lg:order-2">
           {/* Phase Header with Timer */}
           <div className="bg-gradient-to-r from-blue-900/50 via-gray-900/80 to-red-900/50 rounded-xl p-3 mb-3 border border-white/10">
+            {/* Mode Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-3 py-0.5 rounded-full font-medium">
+                {DRAFT_MODES[draftMode].icon} {DRAFT_MODES[draftMode].name}
+              </span>
+            </div>
             <div className="grid grid-cols-3 items-center">
               {/* Blue Team Indicator */}
               <div className="flex items-center gap-2 justify-start">
@@ -644,7 +697,7 @@ export default function DraftSimulator() {
             
             {/* Red Bans - Horizontal row */}
             <div className="flex justify-center gap-2 mb-4">
-              {[0, 1, 2, 3, 4].map((index) => renderBanSlot(redBans[index], 'red', index))}
+              {Array.from({ length: DRAFT_MODES[draftMode].bansPerTeam }, (_, index) => renderBanSlot(redBans[index], 'red', index))}
             </div>
             
             {/* Red Picks - Vertical list */}
