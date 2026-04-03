@@ -51,6 +51,8 @@ class HeroBase(BaseModel):
     specialty: Optional[str] = None
     description: Optional[str] = None
     skills: Optional[str] = None
+    global_rg_win_rate: Optional[float] = None
+    global_rg_source: Optional[str] = None
 
 
 class HeroCreate(HeroBase):
@@ -65,6 +67,8 @@ class HeroUpdate(BaseModel):
     specialty: Optional[str] = None
     description: Optional[str] = None
     skills: Optional[str] = None
+    global_rg_win_rate: Optional[float] = None
+    global_rg_source: Optional[str] = None
 
 
 class HeroResponse(HeroBase):
@@ -183,11 +187,20 @@ class HeroSuggestion(BaseModel):
     hero: HeroResponse
     score: float
     tier: Optional[str] = None
+    lane_fit: Optional[str] = None
     reasons: List[str] = []
+
+
+class DraftSuggestionGroups(BaseModel):
+    counter: List[HeroSuggestion] = []
+    synergy: List[HeroSuggestion] = []
+    safe: List[HeroSuggestion] = []
 
 
 class DraftSuggestionResponse(BaseModel):
     suggestions: List[HeroSuggestion]
+    suggestion_groups: DraftSuggestionGroups
+    avoid_suggestions: List[HeroSuggestion] = []
     team_analysis: dict
 
 
@@ -197,6 +210,11 @@ class DraftBase(BaseModel):
     blue_picks: Optional[str] = None
     red_picks: Optional[str] = None
     winner: Optional[str] = None
+    verdict: Optional[str] = None
+    analysis_summary: Optional[str] = None
+    blue_win_probability: Optional[float] = None
+    red_win_probability: Optional[float] = None
+    standout_picks: Optional[str] = None
 
 
 class DraftCreate(DraftBase):

@@ -114,6 +114,7 @@ HEROES_DATA = [
     {"name": "Valentina", "role": "mage", "secondary_role": "assassin", "specialty": "Burst/Mobility"},
     {"name": "Novaria", "role": "mage", "specialty": "Poke/Burst"},
     {"name": "Zhuxin", "role": "mage", "specialty": "Burst/Crowd Control"},
+    {"name": "Zetian", "role": "mage", "specialty": "Damage/Crowd Control"},
     {"name": "Lunox", "role": "mage", "secondary_role": "support", "specialty": "Burst/Damage"},
     {"name": "Harith", "role": "mage", "secondary_role": "assassin", "specialty": "Burst/Mobility"},
     {"name": "Yve", "role": "mage", "specialty": "Poke/Crowd Control"},

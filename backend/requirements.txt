@@ -18,6 +18,7 @@ passlib[bcrypt]==1.7.4
 
 # CORS and HTTP
 httpx==0.25.2
+beautifulsoup4==4.12.3
 
 # Environment
 python-dotenv==1.0.0

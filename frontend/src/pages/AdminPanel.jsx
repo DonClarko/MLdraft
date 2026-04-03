@@ -151,7 +151,7 @@ function HeroesManager() {
   const [showForm, setShowForm] = useState(false)
   const [editingHero, setEditingHero] = useState(null)
   const [formData, setFormData] = useState({
-    name: '', role: 'tank', specialty: '', description: '', image_url: ''
+    name: '', role: 'tank', specialty: '', description: '', image_url: '', global_rg_win_rate: '', global_rg_source: 'Global RG'
   })
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -172,12 +172,18 @@ function HeroesManager() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const payload = {
+      ...formData,
+      global_rg_win_rate: formData.global_rg_win_rate === '' ? null : Number(formData.global_rg_win_rate),
+      global_rg_source: formData.global_rg_source || null,
+    }
+
     try {
       if (editingHero) {
-        await heroesApi.update(editingHero.id, formData)
+        await heroesApi.update(editingHero.id, payload)
         toast.success('Hero updated!')
       } else {
-        await heroesApi.create(formData)
+        await heroesApi.create(payload)
         toast.success('Hero created!')
       }
       fetchHeroes()
@@ -205,7 +211,9 @@ function HeroesManager() {
       role: hero.role,
       specialty: hero.specialty || '',
       description: hero.description || '',
-      image_url: hero.image_url || ''
+      image_url: hero.image_url || '',
+      global_rg_win_rate: hero.global_rg_win_rate ?? '',
+      global_rg_source: hero.global_rg_source || 'Global RG'
     })
     setShowForm(true)
   }
@@ -213,7 +221,7 @@ function HeroesManager() {
   const resetForm = () => {
     setShowForm(false)
     setEditingHero(null)
-    setFormData({ name: '', role: 'tank', specialty: '', description: '', image_url: '' })
+    setFormData({ name: '', role: 'tank', specialty: '', description: '', image_url: '', global_rg_win_rate: '', global_rg_source: 'Global RG' })
   }
 
   const filteredHeroes = heroes.filter(h => 
@@ -290,6 +298,31 @@ function HeroesManager() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-1">Global RG Win Rate</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={formData.global_rg_win_rate}
+                  onChange={(e) => setFormData({ ...formData, global_rg_win_rate: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g., 53.8"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-1">Win Rate Source</label>
+                <input
+                  type="text"
+                  value={formData.global_rg_source}
+                  onChange={(e) => setFormData({ ...formData, global_rg_source: e.target.value })}
+                  className="input-field"
+                  placeholder="Global RG"
+                />
+              </div>
+
               <div className="flex space-x-3">
                 <button type="button" onClick={resetForm} className="btn-secondary flex-1">
                   Cancel
@@ -326,17 +359,18 @@ function HeroesManager() {
                 <th className="text-left px-4 py-3 text-white/70 font-medium">Name</th>
                 <th className="text-left px-4 py-3 text-white/70 font-medium">Role</th>
                 <th className="text-left px-4 py-3 text-white/70 font-medium">Specialty</th>
+                <th className="text-left px-4 py-3 text-white/70 font-medium">RG Win Rate</th>
                 <th className="text-right px-4 py-3 text-white/70 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-white/50">Loading...</td>
+                  <td colSpan={5} className="text-center py-8 text-white/50">Loading...</td>
                 </tr>
               ) : filteredHeroes.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-white/50">No heroes found</td>
+                  <td colSpan={5} className="text-center py-8 text-white/50">No heroes found</td>
                 </tr>
               ) : (
                 filteredHeroes.map((hero) => (
@@ -344,6 +378,7 @@ function HeroesManager() {
                     <td className="px-4 py-3 text-white">{hero.name}</td>
                     <td className="px-4 py-3 text-white/70 capitalize">{hero.role}</td>
                     <td className="px-4 py-3 text-white/50">{hero.specialty || '-'}</td>
+                    <td className="px-4 py-3 text-white/70">{hero.global_rg_win_rate != null ? `${Number(hero.global_rg_win_rate).toFixed(1)}%` : '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleEdit(hero)}

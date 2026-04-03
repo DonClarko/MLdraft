@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from app.config import settings
 from app.database import engine, Base
 from app.routes import (
@@ -13,6 +14,47 @@ from app.routes import (
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_draft_columns() -> None:
+    inspector = inspect(engine)
+    if "drafts" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("drafts")}
+    required_columns = {
+        "verdict": "TEXT",
+        "analysis_summary": "TEXT",
+        "blue_win_probability": "FLOAT",
+        "red_win_probability": "FLOAT",
+        "standout_picks": "TEXT",
+    }
+
+    with engine.begin() as connection:
+        for column_name, column_type in required_columns.items():
+            if column_name not in existing_columns:
+                connection.execute(text(f"ALTER TABLE drafts ADD COLUMN {column_name} {column_type}"))
+
+
+def ensure_hero_columns() -> None:
+    inspector = inspect(engine)
+    if "heroes" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("heroes")}
+    required_columns = {
+        "global_rg_win_rate": "FLOAT",
+        "global_rg_source": "TEXT",
+    }
+
+    with engine.begin() as connection:
+        for column_name, column_type in required_columns.items():
+            if column_name not in existing_columns:
+                connection.execute(text(f"ALTER TABLE heroes ADD COLUMN {column_name} {column_type}"))
+
+
+ensure_hero_columns()
+ensure_draft_columns()
 
 # Create FastAPI app
 app = FastAPI(

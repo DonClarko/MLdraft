@@ -66,6 +66,11 @@ uvicorn main:app --reload
 python scripts/seed_data.py
 ```
 
+7. Import hero skills from the Mobile Legends wiki API:
+```bash
+python scripts/import_hero_skills.py --only-missing
+```
+
 The API will be available at `http://localhost:8000`
 - API Docs: `http://localhost:8000/docs`
 

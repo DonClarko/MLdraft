@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Search, Filter, Shield, Sword, Target, Wand2, Crosshair, Heart, ChevronDown, X } from 'lucide-react'
+import { Search, Shield, Sword, Target, Wand2, Crosshair, Heart, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { heroesApi, countersApi, synergiesApi } from '../services/api'
 import HeroCard from '../components/HeroCard'
 
 const ROLES = ['all', 'tank', 'fighter', 'assassin', 'mage', 'marksman', 'support']
+const SKILL_SECTION_LABELS = {
+  passive: 'Passive',
+  skill_1: 'Skill 1',
+  skill_2: 'Skill 2',
+  skill_3: 'Skill 3',
+  skill_4: 'Skill 4',
+  ultimate: 'Ultimate'
+}
 
 const roleIcons = {
   tank: Shield,
@@ -13,6 +21,28 @@ const roleIcons = {
   mage: Wand2,
   marksman: Crosshair,
   support: Heart
+}
+
+function parseHeroSkills(skills) {
+  if (!skills) {
+    return []
+  }
+
+  try {
+    const parsed = typeof skills === 'string' ? JSON.parse(skills) : skills
+    if (!parsed || !Array.isArray(parsed.abilities)) {
+      return []
+    }
+
+    return parsed.abilities.filter((ability) => ability?.name && ability?.description)
+  } catch (error) {
+    console.error('Failed to parse hero skills:', error)
+    return []
+  }
+}
+
+function formatSkillSection(skill) {
+  return SKILL_SECTION_LABELS[skill.slot] || skill.section || 'Skill'
 }
 
 export default function HeroDatabase() {
@@ -24,6 +54,7 @@ export default function HeroDatabase() {
   const [heroCounters, setHeroCounters] = useState([])
   const [heroSynergies, setHeroSynergies] = useState([])
   const [detailsLoading, setDetailsLoading] = useState(false)
+  const [expandedSkills, setExpandedSkills] = useState({})
 
   // Fetch heroes
   useEffect(() => {
@@ -83,6 +114,14 @@ export default function HeroDatabase() {
   }, {})
 
   const RoleIcon = selectedHero ? roleIcons[selectedHero.role] : null
+  const heroSkills = selectedHero ? parseHeroSkills(selectedHero.skills) : []
+
+  const toggleSkillExpansion = (skillKey) => {
+    setExpandedSkills((current) => ({
+      ...current,
+      [skillKey]: !current[skillKey]
+    }))
+  }
 
   if (loading) {
     return (
@@ -251,6 +290,65 @@ export default function HeroDatabase() {
                     <p className="text-white/70 text-sm">{selectedHero.description}</p>
                   </div>
                 )}
+
+                {/* Skills */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-white/50 mb-2">
+                    Skills ({heroSkills.length})
+                  </h3>
+                  {heroSkills.length > 0 ? (
+                    <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-1">
+                      {heroSkills.map((skill, index) => {
+                        const skillKey = `${selectedHero.id}-${skill.slot}-${index}`
+                        const isExpanded = !!expandedSkills[skillKey]
+                        const isLongDescription = skill.description.length > 220
+
+                        return (
+                        <div key={`${skill.slot}-${skill.name}-${index}`} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-ml-blue-300/80">
+                                {formatSkillSection(skill)}
+                              </p>
+                              <h4 className="text-sm font-semibold text-white">
+                                {skill.name}
+                              </h4>
+                            </div>
+                          </div>
+
+                          {skill.labels?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {skill.labels.map((label) => (
+                                <span key={label} className="px-2 py-1 rounded-full bg-ml-blue-500/10 text-[11px] text-ml-blue-200 border border-ml-blue-400/20">
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <p className="text-sm leading-6 text-white/75">
+                            {isExpanded || !isLongDescription
+                              ? skill.description
+                              : `${skill.description.slice(0, 220).trim()}...`}
+                          </p>
+
+                          {isLongDescription && (
+                            <button
+                              type="button"
+                              onClick={() => toggleSkillExpansion(skillKey)}
+                              className="mt-2 text-xs font-medium text-ml-blue-300 hover:text-ml-blue-200"
+                            >
+                              {isExpanded ? 'Show less' : 'Show more'}
+                            </button>
+                          )}
+                        </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-white/50 text-sm">No skill data available</p>
+                  )}
+                </div>
 
                 {/* Counters */}
                 <div className="mb-6">

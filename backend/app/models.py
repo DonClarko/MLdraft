@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -45,6 +45,8 @@ class Hero(Base):
     specialty = Column(String(200), nullable=True)
     description = Column(Text, nullable=True)
     skills = Column(Text, nullable=True)  # JSON string of skills
+    global_rg_win_rate = Column(Float, nullable=True)
+    global_rg_source = Column(String(120), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -131,4 +133,9 @@ class Draft(Base):
     blue_picks = Column(Text, nullable=True)  # JSON array of hero IDs
     red_picks = Column(Text, nullable=True)  # JSON array of hero IDs
     winner = Column(String(10), nullable=True)  # blue, red, or null
+    verdict = Column(String(120), nullable=True)
+    analysis_summary = Column(Text, nullable=True)
+    blue_win_probability = Column(Float, nullable=True)
+    red_win_probability = Column(Float, nullable=True)
+    standout_picks = Column(Text, nullable=True)  # JSON payload for saved analysis
     created_at = Column(DateTime, default=datetime.utcnow)

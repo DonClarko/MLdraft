@@ -55,7 +55,9 @@ def create_hero(
         image_url=hero.image_url,
         specialty=hero.specialty,
         description=hero.description,
-        skills=hero.skills
+        skills=hero.skills,
+        global_rg_win_rate=hero.global_rg_win_rate,
+        global_rg_source=hero.global_rg_source,
     )
     db.add(db_hero)
     db.commit()
@@ -122,7 +124,9 @@ def create_heroes_bulk(
             image_url=hero_data.image_url,
             specialty=hero_data.specialty,
             description=hero_data.description,
-            skills=hero_data.skills
+            skills=hero_data.skills,
+            global_rg_win_rate=hero_data.global_rg_win_rate,
+            global_rg_source=hero_data.global_rg_source,
         )
         db.add(db_hero)
         created_heroes.append(db_hero)
